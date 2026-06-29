@@ -1,5 +1,6 @@
 package com.sentinelsite.voice
 
+import com.sentinelsite.BuildConfig
 import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
@@ -28,7 +29,7 @@ class VoiceCopilot {
     // Real call to Backend RAG intent router
     suspend fun queryCopilot(query: String, siteId: String, workerId: String): String {
         return try {
-            val response: HttpResponse = client.post("http://10.0.2.2:8000/api/v1/voice/query") {
+            val response: HttpResponse = client.post("http://${BuildConfig.BACKEND_IP}:8000/api/v1/voice/query") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"site_id": "$siteId", "worker_id": "$workerId", "query": "$query"}""")
             }

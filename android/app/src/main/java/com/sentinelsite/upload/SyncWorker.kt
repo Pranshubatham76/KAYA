@@ -1,5 +1,6 @@
 package com.sentinelsite.upload
 
+import com.sentinelsite.BuildConfig
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -32,7 +33,7 @@ class SyncWorker(
         for (event in pendingEvents) {
             try {
                 val response: HttpResponse = client.submitFormWithBinaryData(
-                    url = "http://10.0.2.2:8000/api/v1/events",
+                    url = "http://${BuildConfig.BACKEND_IP}:8000/api/v1/events",
                     formData = formData {
                         append("payload", """
                             {

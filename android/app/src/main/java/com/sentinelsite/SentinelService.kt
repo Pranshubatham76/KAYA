@@ -2,7 +2,7 @@ package com.sentinelsite
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
+import androidx.lifecycle.LifecycleService
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -13,14 +13,18 @@ import com.sentinelsite.audio.YAMNetInferenceEngine
 import com.sentinelsite.fusion.EventTriggerController
 import com.sentinelsite.fusion.FusionGate
 import com.sentinelsite.imu.IMUManager
+import com.sentinelsite.imu.LocationManager
+import com.sentinelsite.vision.CameraManager
 import kotlinx.coroutines.*
 
-class SentinelService : Service() {
+class SentinelService : LifecycleService() {
 
     private lateinit var audioBufferManager: AudioBufferManager
     private lateinit var yamnetEngine: YAMNetInferenceEngine
     private lateinit var imuManager: IMUManager
     private lateinit var fusionGate: FusionGate
+    private lateinit var cameraManager: CameraManager
+    private lateinit var locationManager: LocationManager
     private lateinit var eventTriggerController: EventTriggerController
     
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
@@ -31,7 +35,9 @@ class SentinelService : Service() {
         audioBufferManager = AudioBufferManager()
         yamnetEngine = YAMNetInferenceEngine(this)
         fusionGate = FusionGate()
-        eventTriggerController = EventTriggerController(this, audioBufferManager)
+        cameraManager = CameraManager(this, this)
+        locationManager = LocationManager(this)
+        eventTriggerController = EventTriggerController(this, audioBufferManager, cameraManager, locationManager)
         
         imuManager = IMUManager(this) { timestamp ->
             if (fusionGate.onImuJerk(timestamp)) {
@@ -96,7 +102,10 @@ class SentinelService : Service() {
         serviceScope.cancel()
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
+        return null
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

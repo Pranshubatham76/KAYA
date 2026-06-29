@@ -1,3 +1,23 @@
+import java.net.NetworkInterface
+import java.net.Inet4Address
+
+def getLocalIp() {
+    try {
+        for (NetworkInterface intf : NetworkInterface.getNetworkInterfaces()) {
+            if (intf.isLoopback() || !intf.isUp()) continue
+            for (def addr : intf.getInetAddresses()) {
+                if (addr instanceof Inet4Address) {
+                    def ip = addr.getHostAddress()
+                    if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
+                        return ip
+                    }
+                }
+            }
+        }
+    } catch (Exception e) {}
+    return "10.0.2.2"
+}
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
@@ -14,6 +34,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        
+        buildConfigField "String", "BACKEND_IP", "\"${getLocalIp()}\""
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -23,7 +45,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            minifyEnabled false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -39,6 +61,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -56,6 +79,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
